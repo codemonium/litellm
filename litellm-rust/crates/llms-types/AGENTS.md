@@ -5,9 +5,12 @@ The same ownership rule applies to Messages, Responses, Chat Completions, OCR, a
   - Being public, serializable, or used by several crates is not sufficient
   - These are intended boundaries, not a claim that every existing item follows them
 
-- Organize public API contracts under `formats`: `messages`, `chat_completions`, `responses`, `ocr`, `audio_transcription`, and `batches`
+- Organize public API contracts under `formats`: `messages`, `chat`, `responses`, `ocr`, `audio_transcription`, and `batches`
   - Use names such as `litellm_llms_types::formats::messages::MessagesRequest`, without an Anthropic prefix solely because Anthropic designed Messages
   - Keep one canonical definition and import path when moving a contract, updating consumers together instead of adding duplicate models or compatibility re-exports
+  - `chat` means Chat Completions, matching `llms/src/base_llm/chat`, provider `chat` adapters, and `inference-chat`. Split larger formats by content, request, response, and streaming responsibilities; keep small contracts in a single file
+  - `batches` owns the normalized batch job contract, separate from the format of its enclosed requests and results. The current `BatchResponse` is a partial LiteLLM contract consumed by the Anthropic adapter, not a complete OpenAI or Anthropic batch schema
+  - Provider batch submission, polling, result retrieval, and status/count normalization stay in `llms/src/<provider>/batches`. Reuse the underlying format contracts for request and result bodies
 
 - Keep shared provider-specific wire types and extensions under `providers`
   - Provider types may reuse format types; format types must not depend on provider types

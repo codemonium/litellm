@@ -1,6 +1,4 @@
-use litellm_llms_types::formats::chat_completions::{
-    ChatCompletionsResponse, ChatMessage, ChatMessageContent,
-};
+use litellm_llms_types::formats::chat::{ChatCompletionsResponse, ChatMessage, ChatMessageContent};
 use serde_json::{Map, Value};
 
 use crate::{

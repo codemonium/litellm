@@ -816,7 +816,7 @@ mod tests {
     fn test_reasoning_effort_budget_capped_for_openai_like_messages_upstream(
         #[case] config: OpenAILikeMessagesConfig,
     ) {
-        use litellm_llms_types::formats::chat_completions::ReasoningEffort;
+        use litellm_llms_types::formats::chat::ReasoningEffort;
         use litellm_llms_types::formats::messages::{
             Message, MessageContent, MessageRole, ThinkingConfig,
         };

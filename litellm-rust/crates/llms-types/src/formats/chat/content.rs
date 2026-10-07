@@ -6,6 +6,13 @@ use crate::serde_compat::deserialize_present;
 use crate::formats::messages::{CacheControl, Citations, ContentSource};
 
 #[macro_rules_attribute::apply(wire_type)]
+#[serde(untagged)]
+pub enum ChatMessageContent {
+    Text(String),
+    Parts(Vec<Recognized<ChatContentPart>>),
+}
+
+#[macro_rules_attribute::apply(wire_type)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum ChatContentPart {
     Text {

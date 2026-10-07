@@ -33,8 +33,7 @@ pub enum ResponsesContentPart {
             skip_serializing_if = "Option::is_none",
             deserialize_with = "deserialize_present"
         )]
-        logprobs:
-            Option<Recognized<Vec<Recognized<crate::formats::chat_completions::ChatTokenLogprob>>>>,
+        logprobs: Option<Recognized<Vec<Recognized<crate::formats::chat::ChatTokenLogprob>>>>,
         #[serde(flatten)]
         extra: Map<String, Value>,
     },

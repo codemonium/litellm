@@ -750,7 +750,7 @@ fn clamp_bedrock_effort(
     };
     let reasoning_effort = request.params.reasoning_effort.map(|effort| match effort {
         Recognized::Known(effort) if context.thinking.capabilities.supports_adaptive_thinking => {
-            use litellm_llms_types::formats::chat_completions::ReasoningEffort;
+            use litellm_llms_types::formats::chat::ReasoningEffort;
             match effort {
                 ReasoningEffort::Low | ReasoningEffort::Minimal | ReasoningEffort::None => {
                     Recognized::Known(effort)
@@ -2410,33 +2410,29 @@ mod tests {
 
     #[rstest]
     #[case::xhigh_clamped(
-        litellm_llms_types::formats::chat_completions::ReasoningEffort::Xhigh,
+        litellm_llms_types::formats::chat::ReasoningEffort::Xhigh,
         Some(EffortLevel::Max),
         Some(EffortLevel::Max)
     )]
     #[case::max_kept(
-        litellm_llms_types::formats::chat_completions::ReasoningEffort::Max,
+        litellm_llms_types::formats::chat::ReasoningEffort::Max,
         Some(EffortLevel::Max),
         Some(EffortLevel::Max)
     )]
     #[case::high_kept(
-        litellm_llms_types::formats::chat_completions::ReasoningEffort::High,
+        litellm_llms_types::formats::chat::ReasoningEffort::High,
         Some(EffortLevel::Max),
         Some(EffortLevel::High)
     )]
     #[case::xhigh_supported(
-        litellm_llms_types::formats::chat_completions::ReasoningEffort::Xhigh,
+        litellm_llms_types::formats::chat::ReasoningEffort::Xhigh,
         Some(EffortLevel::Xhigh),
         Some(EffortLevel::Xhigh)
     )]
-    #[case::xhigh_rejected(
-        litellm_llms_types::formats::chat_completions::ReasoningEffort::Xhigh,
-        None,
-        None
-    )]
+    #[case::xhigh_rejected(litellm_llms_types::formats::chat::ReasoningEffort::Xhigh, None, None)]
     fn test_bedrock_invoke_messages_clamps_reasoning_effort_before_validation(
         native_request: MessagesRequest,
-        #[case] effort: litellm_llms_types::formats::chat_completions::ReasoningEffort,
+        #[case] effort: litellm_llms_types::formats::chat::ReasoningEffort,
         #[case] ceiling: Option<EffortLevel>,
         #[case] expected: Option<EffortLevel>,
     ) {

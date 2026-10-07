@@ -1,4 +1,4 @@
-use litellm_llms_types::formats::chat_completions::{ChatCompletionsUsage, PromptTokensDetails};
+use litellm_llms_types::formats::chat::{ChatCompletionsUsage, PromptTokensDetails};
 
 const FINISH_REASONS: &[(&str, &str)] = &[
     ("end_turn", "stop"),
