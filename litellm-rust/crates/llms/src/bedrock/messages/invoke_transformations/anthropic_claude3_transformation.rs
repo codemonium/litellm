@@ -2064,7 +2064,7 @@ mod tests {
     #[case::entry_override_disables_adaptive(false)]
     fn test_messages_thinking_shape_follows_injected_provider_entry_flag(#[case] adaptive: bool) {
         use litellm_llms_types::formats::{
-            chat_completions::ReasoningEffort,
+            chat::ReasoningEffort,
             messages::{
                 EffortLevel, Message, MessageContent, MessageRole, OutputConfig, ThinkingConfig,
                 ThinkingDisplay,
