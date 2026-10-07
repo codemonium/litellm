@@ -1,10 +1,14 @@
-This directory owns Anthropic's implementation of the Messages adapter contract in `base_llm/messages`. Shared Messages API data contracts belong in `litellm-llms-types::formats::messages`, and call orchestration belongs in `inference-messages`. Sharing the `llms` crate with `base_llm/messages` does not erase this boundary
-
-# Scope
+# structure
 
 - Anthropic's implementation of the Messages adapter contract in `base_llm/messages`, reached by `custom_llm_provider == "anthropic"` for any model through `ANTHROPIC_MESSAGES_CONFIG` in `inference-messages/src`
 
-# Invariants
+# boundaries
+
+- Payload shaping, metadata filtering, tool-ID rewriting, web-search replay handling, thinking translation and beta selection are Anthropic policy and stay here or in Anthropic helpers
+- Azure reuses the shaping, request transformation and beta merge, and Bedrock reuses the shaping. That reuse does not make this policy part of the shared Messages contract
+- `web_search_result`, `web_search_tool_result_error` and encrypted-content schemas belong to `litellm-llms-types`. Only the decisions about flattening, encrypted results, betas and capabilities live here
+
+# invariants
 
 - An OAuth token (`sk-ant-oat...`), forwarded or passed as `api_key`, is the whole credential: it goes out as a bearer and `x-api-key` is dropped
 - A forwarded `x-api-key` or `authorization` header in any casing beats the configured key
@@ -12,28 +16,22 @@ This directory owns Anthropic's implementation of the Messages adapter contract 
 - Responses and SSE streams are relayed in the Anthropic wire format without rewriting
 - Mid-conversation `system` messages and billing-header system blocks reach the first-party API untouched
 
-# Boundaries
-
-- Payload shaping, metadata filtering, tool-ID rewriting, web-search replay handling, thinking translation and beta selection are Anthropic policy and stay here or in Anthropic helpers
-- Azure reuses the shaping, request transformation and beta merge, and Bedrock reuses the shaping. That reuse does not make this policy part of the shared Messages contract
-- `web_search_result`, `web_search_tool_result_error` and encrypted-content schemas belong to `litellm-llms-types`. Only the decisions about flattening, encrypted results, betas and capabilities live here
-
-# Gotchas
+# gotchas
 
 - `handler.rs` holds pure payload shaping despite its name. New shaping still belongs with transformations
 
-# Known gaps
+# known gaps
 
 - Workload identity federation (Python `litellm/llms/anthropic/wif.py`) is not a credential source
 
-# References
+# references
 
-## Python
+## python
 
 - `litellm/llms/anthropic/pass_through/messages/transformation.py` (`AnthropicMessagesConfig`)
 - `litellm/llms/anthropic/common_utils.py` (auth, URL, OAuth and beta helpers)
 
-## Docs
+## docs
 
 - https://platform.claude.com/docs/en/api/http/messages/create
 - https://platform.claude.com/docs/en/api/messages/create.md

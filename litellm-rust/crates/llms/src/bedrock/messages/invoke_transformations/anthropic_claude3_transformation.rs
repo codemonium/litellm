@@ -579,28 +579,6 @@ fn bedrock_tool_betas(
     .collect()
 }
 
-fn normalized_schema_value(value: Value) -> Value {
-    match value {
-        Value::Object(fields) => Value::Object(
-            fields
-                .into_iter()
-                .map(|(key, value)| {
-                    let value = if key == "type" && value == "custom" {
-                        Value::String("object".into())
-                    } else {
-                        normalized_schema_value(value)
-                    };
-                    (key, value)
-                })
-                .collect(),
-        ),
-        Value::Array(values) => {
-            Value::Array(values.into_iter().map(normalized_schema_value).collect())
-        }
-        other => other,
-    }
-}
-
 fn normalized_schema(schema: Recognized<JsonSchema>) -> Recognized<JsonSchema> {
     match schema {
         Recognized::Known(JsonSchema::Object(schema)) => {
@@ -608,9 +586,7 @@ fn normalized_schema(schema: Recognized<JsonSchema>) -> Recognized<JsonSchema> {
                 Recognized::Known(schemas) => {
                     Recognized::Known(schemas.into_iter().map(normalized_schema).collect())
                 }
-                Recognized::Unrecognized(value) => {
-                    Recognized::Unrecognized(normalized_schema_value(value))
-                }
+                other => other,
             };
             let map_properties = |properties: Recognized<
                 std::collections::BTreeMap<String, Recognized<JsonSchema>>,
@@ -621,18 +597,14 @@ fn normalized_schema(schema: Recognized<JsonSchema>) -> Recognized<JsonSchema> {
                         .map(|(key, schema)| (key, normalized_schema(schema)))
                         .collect(),
                 ),
-                Recognized::Unrecognized(value) => {
-                    Recognized::Unrecognized(normalized_schema_value(value))
-                }
+                other => other,
             };
             let map_box = |schema: Recognized<Box<JsonSchema>>| match schema {
                 Recognized::Known(schema) => match normalized_schema(Recognized::Known(*schema)) {
                     Recognized::Known(schema) => Recognized::Known(Box::new(schema)),
                     Recognized::Unrecognized(value) => Recognized::Unrecognized(value),
                 },
-                Recognized::Unrecognized(value) => {
-                    Recognized::Unrecognized(normalized_schema_value(value))
-                }
+                other => other,
             };
             Recognized::Known(JsonSchema::Object(Box::new(JsonSchemaObject {
                 schema_type: schema.schema_type.map(|kind| match kind {
@@ -648,15 +620,9 @@ fn normalized_schema(schema: Recognized<JsonSchema>) -> Recognized<JsonSchema> {
                 any_of: schema.any_of.map(map_schemas),
                 all_of: schema.all_of.map(map_schemas),
                 one_of: schema.one_of.map(map_schemas),
-                extra: schema
-                    .extra
-                    .into_iter()
-                    .map(|(key, value)| (key, normalized_schema_value(value)))
-                    .collect(),
                 ..*schema
             })))
         }
-        Recognized::Unrecognized(value) => Recognized::Unrecognized(normalized_schema_value(value)),
         other => other,
     }
 }
@@ -1735,6 +1701,41 @@ mod tests {
                 required: Some(Recognized::Known(vec!["nested".into()])),
                 ..Default::default()
             })))
+        );
+    }
+
+    #[rstest]
+    #[case::constant("const", json!({"type": "custom"}))]
+    #[case::enumeration("enum", json!([{"type": "custom"}]))]
+    #[case::examples("examples", json!([{"type": "custom"}]))]
+    #[case::extension("future", json!({"type": "custom"}))]
+    #[case::unrecognized_items("items", json!([{"type": "custom"}]))]
+    fn bedrock_tool_schema_normalization_preserves_literal_and_opaque_values(
+        #[case] field: &str,
+        #[case] value: Value,
+    ) {
+        let definition: ToolDefinition = serde_json::from_value(json!({
+            "name": "example",
+            "input_schema": {
+                "type": "custom",
+                "properties": {
+                    "type": {"type": "custom", field: value.clone()}
+                }
+            }
+        }))
+        .unwrap();
+        let normalized = bedrock_tool_definition(definition, 0, false);
+        assert_eq!(
+            serde_json::to_value(normalized).unwrap(),
+            json!({
+                "name": "example",
+                "input_schema": {
+                    "type": "object",
+                    "properties": {
+                        "type": {"type": "object", field: value}
+                    }
+                }
+            })
         );
     }
 

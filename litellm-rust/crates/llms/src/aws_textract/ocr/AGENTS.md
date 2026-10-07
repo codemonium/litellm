@@ -1,4 +1,4 @@
-# References
+# references
 
 - https://docs.aws.amazon.com/textract/latest/APIReference/Welcome.md
 - https://docs.aws.amazon.com/textract/latest/APIReference/API_Operations.md

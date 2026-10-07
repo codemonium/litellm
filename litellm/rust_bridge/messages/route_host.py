@@ -16,6 +16,7 @@ from litellm.types.llms.anthropic_messages.anthropic_response import AnthropicMe
 
 _DROP_PATHS: Final = TypeAdapter(list[object])
 _METADATA_SOURCE: Final = TypeAdapter(dict[object, object])
+_BEDROCK_REGION: Final[TypeAdapter[str | None]] = TypeAdapter(str | None)
 
 
 @dataclass(frozen=True, slots=True)
@@ -208,13 +209,18 @@ def _bedrock_connection(
     if provider != "bedrock":
         return None
 
+    from litellm.llms.bedrock.base_aws_llm import BaseAWSLLM
+
+    region: Final = _BEDROCK_REGION.validate_python(kwargs.get("aws_region_name"), strict=True)
+    BaseAWSLLM._validate_aws_region_name(region)  # pyright: ignore[reportPrivateUsage]  # same gate as the legacy URL builder
+
     def text(name: str) -> str | None:
         value: Final = kwargs.get(name)
         return value if isinstance(value, str) else None
 
     return BedrockMessagesConnection(
         api_base=text("aws_bedrock_runtime_endpoint"),
-        region=text("aws_region_name"),
+        region=region,
         model_id=text("model_id"),
         workspace_id=text("aws_bedrock_project_id"),
     )

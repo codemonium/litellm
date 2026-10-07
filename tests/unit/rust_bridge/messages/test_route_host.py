@@ -183,9 +183,15 @@ def test_bedrock_connection_projection_preserves_typed_per_call_inputs() -> None
 
 def test_bedrock_connection_projection_drops_non_text_inputs() -> None:
     projected: Final = route_host.shaping(
-        "bedrock/anthropic.claude-test", "bedrock", {"aws_region_name": 3, "model_id": {"unexpected": "value"}}
+        "bedrock/anthropic.claude-test", "bedrock", {"model_id": {"unexpected": "value"}}
     )["bedrock_connection"]
     assert projected == {"api_base": None, "region": None, "model_id": None, "workspace_id": None}
+
+
+@pytest.mark.parametrize("region", [3, "", "US-EAST-1", "us east 1", "us-east-1/path"])
+def test_bedrock_connection_projection_rejects_invalid_explicit_regions(region: object) -> None:
+    with pytest.raises(ValueError, match=r"Invalid AWS region format|type=string_type"):
+        route_host.shaping("bedrock/anthropic.claude-test", "bedrock", {"aws_region_name": region})
 
 
 def test_unmapped_model_keeps_sampling_params_and_no_reasoning_features() -> None:
